@@ -53,3 +53,49 @@ mvnw.cmd spring-boot:run
 ## Siguiente paso 
 
 Implementar autenticacion con JWT y mover el manejo de excepciones a un RestControllerAdvice global.
+# MS Usuarios
+
+Microservicio encargado de la gestión de usuarios del Software Ticketti.
+
+## Funcionalidades iniciales
+- Estructura base del microservicio
+- Organización por capas:
+  - controller
+  - service
+  - repository
+  - model
+  - config
+- Configuración inicial en Spring Boot
+
+## Tecnologías utilizadas
+
+Estas son las herramientas principales que usa el microservicio y el rol que cumplen:
+
+- Java 17: lenguaje base del proyecto.
+- Spring Boot 4.0.5: framework principal para construir la API REST.
+- Spring Web MVC: manejo de controladores, rutas y respuestas HTTP.
+- Spring Data JPA: acceso a la base de datos con repositorios.
+- Spring Security: control de acceso, autenticación y protección de endpoints.
+- Springdoc OpenAPI / Swagger: documentación automática de la API.
+- MySQL: base de datos relacional donde se guardan los usuarios.
+- Lombok: reduce código repetitivo como getters, setters y constructores.
+- Spring Cloud Config Client: permite consumir configuración externa si se usa servidor de configuración.
+- Eureka Client: registra el microservicio en Eureka para descubrimiento de servicios.
+- Spring Boot DevTools: facilita el desarrollo con recarga automática.
+- JWT: tokens para autenticación sin estado en futuras etapas.
+  
+
+## Estructura del proyecto
+src/main/java/com/ticketti/ms_usuarios/
+- controller
+- service
+- repository
+- model
+- config
+
+## Estado actual
+En desarrollo.  
+Actualmente se está construyendo la base del microservicio de usuarios.
+
+## Autor
+Ingrid Núñez Marilicán 
