@@ -22,24 +22,31 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
+
+//@RequestMapping, @GetMapping @PostMapping  definen la ruta del controlador  
+//@RequestBody para recibir el cuerpo de la solicitud en formato Json y spring lo mapea y pasa al service 
+//@ApiResponse y @ApiResponses para documentar la API con Swagger, indicando los posibles codigos de respuesta y lo que significa
+//ResponseEntity para manejar las respuestas HTTP, permitiendo devolver el codigo de estado y el cuerpo de la respuesta de manera flexible
+
+
 @RestController
+
 @RequestMapping("/api/v1/usuarios")
 public class UsuarioController {
-
+	//private final para inyectar el servicio de usuario y manejar la logica de negocio en el controlador
 	private final UsuarioService usuarioService;
 
 	public UsuarioController(UsuarioService usuarioService) {
 		this.usuarioService = usuarioService;
 	}
-    //listado de usuarios, solo para admin
+	
+    //listado de usuarios sin restriccion de rol en la logica del servicio
 	@Operation(summary = "Listar todos los usuarios",
-			description = "Obtiene todos los usuarios. Solo accesible para administradores.")
+			description = "Obtiene todos los usuarios.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Lista de usuarios obtenida exitosamente",
 					content = @Content(array = @ArraySchema(schema = @Schema(implementation = UsuarioModel.class)))),
-			@ApiResponse(responseCode = "204", description = "No hay usuarios registrados"),
-			@ApiResponse(responseCode = "401", description = "No autorizado - Solo administradores"),
-			@ApiResponse(responseCode = "403", description = "Acceso denegado para el rol actual")
+			@ApiResponse(responseCode = "204", description = "No hay usuarios registrados")
 	})
 	@GetMapping
 		public ResponseEntity<?> listarUsuarios() {
@@ -86,13 +93,16 @@ public class UsuarioController {
 	})
 	@PostMapping
 	public ResponseEntity<?> crearUsuario(@RequestBody UsuarioModel usuario) {
-		if (usuarioService.obtenerPorCorreo(usuario.getCorreo()).isPresent()) {
-			return ResponseEntity.status(HttpStatus.CONFLICT)
-					.body(Map.of("mensaje", "El usuario ya existe en la base de datos"));
+		try {
+			UsuarioModel usuarioCreado = usuarioService.crearUsuario(usuario);
+			return ResponseEntity.status(HttpStatus.CREATED).body(usuarioCreado);
+		} catch (IllegalArgumentException e) {
+			if ("El correo ya existe".equals(e.getMessage())) {
+				return ResponseEntity.status(HttpStatus.CONFLICT)
+						.body(Map.of("mensaje", e.getMessage()));
+			}
+			return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
 		}
-
-		UsuarioModel usuarioCreado = usuarioService.crear(usuario);
-		return ResponseEntity.status(HttpStatus.CREATED).body(usuarioCreado);
 	}
 
 
