@@ -11,7 +11,7 @@ on:
 
 jobs:
     build-and-push:
-        runs-on: :ubuntu-latest
+        runs-on: ubuntu-latest
         steps:
           - name: Descargar el codigo del repo
             uses:  actions/checkout@v4
