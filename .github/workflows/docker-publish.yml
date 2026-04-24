@@ -25,7 +25,7 @@ jobs:
             uses: docker/build-push-action@v7
             with:
                 context: .
-                push: yes
+                push: true
                 tags: ${{ secrets.DOCKER_USERNAME }}/ms-usuarios:latest
                         
 
