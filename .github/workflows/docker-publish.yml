@@ -7,7 +7,7 @@ name: Publicar imagen docker
 on:
     push:
         branches:
-            -main 
+            -feature/base-ms-usuarios 
 
 jobs:
     build-and-push:
