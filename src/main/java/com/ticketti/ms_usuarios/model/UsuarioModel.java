@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,8 +14,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UsuarioModel  extends User {
-	
 
+	@NotBlank(message = "La contraseña no puede ser nula")
 	@Column(name = "contrasena", nullable = false, length = 120)
 
 	//para que la pass solo se registre en la bd ,pero no lo muestra en las solucitudes get

@@ -65,10 +65,6 @@ public class UsuarioService {
 			throw new IllegalArgumentException("El usuario es obligatorio");
 		}
 
-		if (nuevoUsuario.getNombre() == null || nuevoUsuario.getNombre().isBlank()) {
-			throw new IllegalArgumentException("El nombre es obligatorio");
-		}
-
 		if (nuevoUsuario.getCorreo() == null || !EMAIL_PATTERN.matcher(nuevoUsuario.getCorreo()).matches()) {
 			throw new IllegalArgumentException("El correo no tiene un formato valido");
 		}
@@ -85,9 +81,6 @@ public class UsuarioService {
 					"La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula y numero");
 		}
 
-		if (nuevoUsuario.getTelefono() == null || !nuevoUsuario.getTelefono().matches("\\d{9}")) {
-			throw new IllegalArgumentException("El telefono debe tener exactamente 9 digitos y en formato numerico");
-		}
 
 		// se normaliza el correo a minusculas
 
@@ -100,6 +93,8 @@ public class UsuarioService {
 		if (nuevoUsuario.getContrasena() != null && !nuevoUsuario.getContrasena().trim().isEmpty()) {
 			nuevoUsuario.setContrasena(contrasenaEncoder.encode(nuevoUsuario.getContrasena()));
 		}
+
+		
 
 		return usuarioRepository.save(nuevoUsuario);
 	}
