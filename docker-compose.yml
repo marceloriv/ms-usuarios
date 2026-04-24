@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: ingridcamila/ms_usuarios:0.1
+    image: mysql:8.4
     container_name: mysql
     restart: unless-stopped
     environment:
@@ -36,7 +36,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=ms_usuarios_app1234
       - SERVER_PORT=8080
     ports:
-      - "8080:8080"
+      - "8081:8080"
 
       #volumes: para ocupar la configuración por defecto 
 
