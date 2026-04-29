@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +14,8 @@ import lombok.Setter;
 @Table(name = "usuarios")
 @Getter
 @Setter
-public class UsuarioModel  extends User {
+@Data
+public class UsuarioModel extends User {
 
 	@NotBlank(message = "La contraseña no puede ser nula")
 	@Column(name = "contrasena", nullable = false, length = 120)

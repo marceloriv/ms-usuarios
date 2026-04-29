@@ -1,6 +1,6 @@
 # se utiliza una imagen base de maven con java 17 para compilar el proyecto
 
-From maven:3.9.14-eclipse-temurin-17-alpine as build
+FROM maven:3.9.14-eclipse-temurin-17-alpine as build
 
 
 # se crea una carpetra dentro de l ocntenedor para almacenar el codigo fuente

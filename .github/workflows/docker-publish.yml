@@ -28,5 +28,3 @@ jobs:
                 push: true
                 tags: ${{ secrets.DOCKERHUB_NAME }}/ms-usuarios:latest
                         
-
-   

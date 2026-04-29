@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 //el factory method lo debo dejar en el service y de ahí crear las carpetas 
@@ -17,12 +18,13 @@ import lombok.Setter;
 @MappedSuperclass
 @Getter
 @Setter
+@Data
 public abstract class User {
 
     @Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@NotBlank(message = "El nombre debe ser obligatorio")
+	@NotNull(message = "El nombre debe ser obligatorio")
 	@Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
 	@Column(nullable = false, length = 100)
 	private String nombre;
