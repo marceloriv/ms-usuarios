@@ -88,14 +88,9 @@ public class UsuarioService {
 		nuevoUsuario.setNombre(nuevoUsuario.getNombre().trim());
 		nuevoUsuario.setCorreo(correoNormalizado);
 		
-		//se  codifica la contraseña antes de cuardarla en la base de datos y no se guarde en texto plano
-		//aplicando el algoritmo de hashing bcrypt y spring security para generar un hash seguro de la contraseña del usuario
-		//la base de datos debe encriptar la contraseña no spring securty 
-		if (nuevoUsuario.getContrasena() != null && !nuevoUsuario.getContrasena().trim().isEmpty()) {
-			nuevoUsuario.setContrasena(contrasenaEncoder.encode(nuevoUsuario.getContrasena()));
-		}
 
-		
+		//la base de datos debe encriptar la contraseña no spring securty 
+	
 
 		return usuarioRepository.save(nuevoUsuario);
 	}
