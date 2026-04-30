@@ -1,11 +1,13 @@
 package com.ticketti.ms_usuarios.service;
 
+import com.ticketti.ms_usuarios.factory.UsuarioFactory;
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.repository.UsuarioRepository;
+import com.ticketti.ms_usuarios.usuarios.Usuario;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,11 +21,12 @@ public class UsuarioService {
 
 	// servicio que contiene la lógica de negocio
 	private final UsuarioRepository usuarioRepository;
-	private final PasswordEncoder contrasenaEncoder;
+	private final UsuarioFactory usuarioFactory;
+	
 
-	public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder contrasenaEncoder) {
+	public UsuarioService(UsuarioRepository usuarioRepository, UsuarioFactory usuarioFactory) {
 		this.usuarioRepository = usuarioRepository;
-		this.contrasenaEncoder = contrasenaEncoder;
+		this.usuarioFactory = usuarioFactory;
 	}
 
 	public List<UsuarioModel> listar() {
@@ -80,6 +83,10 @@ public class UsuarioService {
 			throw new IllegalArgumentException(
 					"La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula y numero");
 		}
+
+		// se utiliza el factory para crear el usuario con el rol correspondiente
+		Usuario tipoUsuario = usuarioFactory.obtenerUsuario(nuevoUsuario.getRol());
+		tipoUsuario.crearUsuario(nuevoUsuario);
 
 
 		// se normaliza el correo a minusculas
