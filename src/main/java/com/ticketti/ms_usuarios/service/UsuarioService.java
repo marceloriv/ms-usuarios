@@ -4,6 +4,10 @@ import com.ticketti.ms_usuarios.factory.UsuarioFactory;
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.repository.UsuarioRepository;
 import com.ticketti.ms_usuarios.usuarios.Usuario;
+import com.ticketti.ms_usuarios.dto.ValidarCredencialesRequest;
+import com.ticketti.ms_usuarios.dto.ValidarCredencialesResponse;
+
+
 
 import java.util.List;
 import java.util.Optional;
@@ -89,6 +93,9 @@ public class UsuarioService {
 		tipoUsuario.crearUsuario(nuevoUsuario);
 
 
+
+
+
 		// se normaliza el correo a minusculas
 
 		nuevoUsuario.setId(null);
@@ -100,6 +107,41 @@ public class UsuarioService {
 	
 
 		return usuarioRepository.save(nuevoUsuario);
+	}
+
+	// validar credenciales para login desde el BFF
+	public ValidarCredencialesResponse validarCredenciales(ValidarCredencialesRequest request) {
+
+		if (request == null ||
+				request.correo() == null || request.correo().isBlank() ||
+				request.contrasena() == null || request.contrasena().isBlank()) {
+			return credencialesInvalidas("Correo y contraseña son obligatorios");
+		}
+
+		String correoNormalizado = request.correo().trim().toLowerCase();
+
+		return usuarioRepository.findByCorreo(correoNormalizado)
+				.filter(usuario -> usuario.getContrasena().equals(request.contrasena()))
+				.map(usuario -> new ValidarCredencialesResponse(
+						true,
+						usuario.getId(),
+						usuario.getCorreo(),
+						usuario.getNombre(),
+						usuario.getRol(),
+						"Credenciales válidas"
+				))
+				.orElseGet(() -> credencialesInvalidas("Credenciales inválidas"));
+	}
+
+	private ValidarCredencialesResponse credencialesInvalidas(String mensaje) {
+		return new ValidarCredencialesResponse(
+				false,
+				null,
+				null,
+				null,
+				null,
+				mensaje
+		);
 	}
 
 	// eliminar usuario por id

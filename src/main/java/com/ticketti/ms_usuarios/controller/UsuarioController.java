@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.ticketti.ms_usuarios.dto.ValidarCredencialesRequest;
+import com.ticketti.ms_usuarios.dto.ValidarCredencialesResponse;
 
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.service.UsuarioService;
@@ -116,6 +118,8 @@ public class UsuarioController {
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
+	
+
 	// eliminar usuario y el administrador puede eliminar a cualquier usuario, el
 	// usuario puede eliminar su propia cuenta
 	@Operation(summary = "Eliminar usuario")
@@ -130,6 +134,21 @@ public class UsuarioController {
 			return ResponseEntity.notFound().build();
 		}
 		return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado correctamente"));
+	}
+
+
+		// validar credenciales para login, se recibe un objeto con correo y contraseña
+	@PostMapping("/validar-credenciales")
+	public ResponseEntity<ValidarCredencialesResponse> validarCredenciales(
+			@RequestBody ValidarCredencialesRequest request) {
+
+		ValidarCredencialesResponse response = usuarioService.validarCredenciales(request);
+
+		if (!response.valido()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+		}
+
+		return ResponseEntity.ok(response);
 	}
 
 }
