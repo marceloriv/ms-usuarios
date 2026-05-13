@@ -115,11 +115,11 @@ El proyecto incluye un `Dockerfile` para compilar y ejecutar el jar, y un `docke
 
 ## Estado del proyecto
 
-En desarrollo. La base del microservicio ya está montada y todavía falta crear el DTO de conexión para integrarlo con el BFF.
+En desarrollo. Ya se hizo la integración del DTO para la conexión con el BFF y ahora está lista para probar las validaciones del BFF.
 
 ## Siguiente paso
 
-Crear el DTO de integración con el BFF y ajustar el contrato de intercambio de datos entre servicios.
+Probar las validaciones del BFF y ajustar el contrato de intercambio de datos si aparece algún cambio necesario.
 
 ## Autor
 
