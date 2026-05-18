@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class UsuarioControllerAdvice {
-
+    //manejador global de errores para capturar las excepciones del microservicio para spring
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<String>> manejarExcepcion(MethodArgumentNotValidException e) {
         List<String> errores = e.getBindingResult()
