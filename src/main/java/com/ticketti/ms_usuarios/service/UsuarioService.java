@@ -175,14 +175,5 @@ public class UsuarioService {
 		return true;
 	}
 
-	// validar credenciales del usuario para autenticacion
-	public boolean validarCredenciales(String correo, String contrasena) {
-		if (correo == null || contrasena == null) {
-			return false;
-		}
-		return usuarioRepository.findByCorreoIgnoreCase(correo.trim())
-				.map(usuario -> coincideConContrasena(contrasena, usuario.getContrasena()))
-				.orElse(false);
-	}
 }
 
