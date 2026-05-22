@@ -4,14 +4,17 @@ import org.springframework.stereotype.Component;
 
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 
-@Component("administradorPlataforma")
 
-public class UsuarioAdminPlataforma {
+@Component("AdminPlataforma")
+public class UsuarioAdminPlataforma extends Usuario {
 
-
+    @Override
     public void crearUsuario(UsuarioModel usuarioModel) {
-        usuarioModel.setRol("ADMINISTRADOR_PLATAFORMA");
+        usuarioModel.setRol("ADMINPLATAFORMA");
         System.out.println("Usuario administrador de plataforma creado con éxito: " + usuarioModel);
     }
 
 }
+
+
+

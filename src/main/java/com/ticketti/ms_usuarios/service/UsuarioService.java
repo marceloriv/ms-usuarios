@@ -57,7 +57,6 @@ public class UsuarioService {
 					usuarioExistente.setNombre(usuarioActualizado.getNombre());
 					usuarioExistente.setCorreo(usuarioActualizado.getCorreo());
 					usuarioExistente.setContrasena(usuarioActualizado.getContrasena());
-					usuarioExistente.setRol(usuarioActualizado.getRol());
 					usuarioExistente.setTelefono(usuarioActualizado.getTelefono());
 					usuarioExistente.setDireccion(usuarioActualizado.getDireccion());
 					return usuarioRepository.save(usuarioExistente);
@@ -107,6 +106,30 @@ public class UsuarioService {
 	
 
 		return usuarioRepository.save(nuevoUsuario);
+	}
+
+	// cambia el rol de un usuario; la autorización debe validarse en el BFF
+
+
+	// Cambia el rol de un usuario; la autorización debe validarse en el BFF
+	public UsuarioModel cambiarRol(Long id, String nuevoRol) {
+		if (id == null) {
+			throw new IllegalArgumentException("El id es obligatorio");
+		}
+
+		if (nuevoRol == null || nuevoRol.isBlank()) {
+			throw new IllegalArgumentException("El rol es obligatorio");
+		}
+
+		String factoryKey = nuevoRol.trim().toLowerCase();
+
+		UsuarioModel usuario = usuarioRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+		Usuario tipoUsuario = usuarioFactory.obtenerUsuario(factoryKey);
+		tipoUsuario.crearUsuario(usuario);
+
+		return usuarioRepository.save(usuario);
 	}
 
 	// validar credenciales para login desde el BFF

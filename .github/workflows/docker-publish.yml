@@ -12,6 +12,11 @@ on:
 jobs:
     build-and-push:
         runs-on: ubuntu-latest
+
+        env:
+            ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+            ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
         steps:
           - name: Descargar el codigo del repo
             uses:  actions/checkout@v4

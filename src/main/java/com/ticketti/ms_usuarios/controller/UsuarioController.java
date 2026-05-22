@@ -90,6 +90,9 @@ public class UsuarioController {
 			@ApiResponse(responseCode = "409", description = "El usuario ya existe en la base de datos"),
 			@ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
 	})
+
+
+
 	@PostMapping
 	public ResponseEntity<?> crearUsuario(@Valid @RequestBody UsuarioModel usuario) {
 		try {
@@ -104,6 +107,9 @@ public class UsuarioController {
 		}
 	}
 
+
+	
+
 	// actualizar los usuarios del sistema uwu
 	@Operation(summary = "Actualizar usuario")
 	@ApiResponses(value = {
@@ -116,6 +122,20 @@ public class UsuarioController {
 		return usuarioService.actualizar(id, usuario)
 				.map(ResponseEntity::ok)
 				.orElseGet(() -> ResponseEntity.notFound().build());
+	}
+	//solo el usuario adminPlataforma puede cambiar el rol del los usruarios
+	@PutMapping("/{id}/rol")
+	public ResponseEntity<?> cambiarRol(
+			@PathVariable Long id,
+			@RequestBody Map<String, String> body
+	) {
+		try {
+			String nuevoRol = body.get("rol");
+			UsuarioModel usuarioActualizado = usuarioService.cambiarRol(id, nuevoRol);
+			return ResponseEntity.ok(usuarioActualizado);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
+		}
 	}
 
 	
