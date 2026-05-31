@@ -41,7 +41,7 @@ services:
     ports:
       - "8080:8080"
 
-      #volumes: para ocupar la configuración por defecto 
+      #volumes: para ocupar la configuración por defecto
 
 volumes:
   mysql_data_v2:
@@ -56,4 +56,4 @@ networks:
 #prubeas unitarias
 #
 
-#prueb 2 crear una vpc , uno de los compañeros hacer el github actions, tres respoitorios, font, back y data, si podemos demostrar un cambio y se cambia en producción 
+#prueb 2 crear una vpc , uno de los compañeros hacer el github actions, tres respoitorios, font, back y data, si podemos demostrar un cambio y se cambia en producción
