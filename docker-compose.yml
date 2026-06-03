@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: mysql
+    container_name: ms-usuarios-mysql
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ms_usuarios
@@ -9,7 +9,7 @@ services:
       MYSQL_USER: ms_usuarios_app
       MYSQL_PASSWORD: ms_usuarios_app1234
     ports:
-      - "3307:3306"
+      - "3310:3306"
     volumes:
       - mysql_data_v2:/var/lib/mysql
 
