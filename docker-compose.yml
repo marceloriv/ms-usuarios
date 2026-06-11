@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: mysql
+    container_name: ms-usuarios-mysql
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ms_usuarios
@@ -9,7 +9,7 @@ services:
       MYSQL_USER: ms_usuarios_app
       MYSQL_PASSWORD: ms_usuarios_app1234
     ports:
-      - "3307:3306"
+      - "3310:3306"
     volumes:
       - mysql_data_v2:/var/lib/mysql
 
@@ -26,6 +26,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      - default
+      - ticketti-network
 
       #variables de entorno para la conexión a la base de datos, que se pasan al contenedor de la aplicación
       #hay que pensar que estas variables de entorno son para que el contenedor de la aplicación pueda conectarse a la base de datos MySQL, que se ejecuta en otro contenedor llamado "mysql". Por eso, se utiliza el nombre del servicio "mysql" como host en la URL de conexión a la base de datos.
@@ -35,13 +38,19 @@ services:
       - SPRING_DATASOURCE_USERNAME=ms_usuarios_app
       - SPRING_DATASOURCE_PASSWORD=ms_usuarios_app1234
       - SERVER_PORT=8080
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://host.docker.internal:8888
     ports:
-      - "8081:8080"
+      - "8080:8080"
 
-      #volumes: para ocupar la configuración por defecto 
+      #volumes: para ocupar la configuración por defecto
 
 volumes:
   mysql_data_v2:
+
+networks:
+  ticketti-network:
+    external: true
 
 
 
@@ -49,4 +58,4 @@ volumes:
 #prubeas unitarias
 #
 
-#prueb 2 crear una vpc , uno de los compañeros hacer el github actions, tres respoitorios, font, back y data, si podemos demostrar un cambio y se cambia en producción 
+#prueb 2 crear una vpc , uno de los compañeros hacer el github actions, tres respoitorios, font, back y data, si podemos demostrar un cambio y se cambia en producción

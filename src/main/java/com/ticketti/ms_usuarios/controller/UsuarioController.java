@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.ticketti.ms_usuarios.dto.ValidarCredencialesRequest;
 import com.ticketti.ms_usuarios.dto.ValidarCredencialesResponse;
-
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.service.UsuarioService;
 
@@ -27,14 +27,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
-//@RequestMapping, @GetMapping @PostMapping  definen la ruta del controlador  
-//@RequestBody para recibir el cuerpo de la solicitud en formato Json y spring lo mapea y pasa al service 
+//@RequestMapping, @GetMapping @PostMapping  definen la ruta del controlador
+//@RequestBody para recibir el cuerpo de la solicitud en formato Json y spring lo mapea y pasa al service
 //@ApiResponse y @ApiResponses para documentar la API con Swagger, indicando los posibles codigos de respuesta y lo que significa
 //ResponseEntity para manejar las respuestas HTTP, permitiendo devolver el codigo de estado y el cuerpo de la respuesta de manera flexible
 
 @RestController
-
+@Slf4j
 @RequestMapping("/api/v1/usuarios")
 public class UsuarioController {
 	// private final para inyectar el servicio de usuario y manejar la logica de
@@ -138,7 +139,7 @@ public class UsuarioController {
 		}
 	}
 
-	
+
 
 	// eliminar usuario y el administrador puede eliminar a cualquier usuario, el
 	// usuario puede eliminar su propia cuenta
@@ -156,19 +157,18 @@ public class UsuarioController {
 		return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado correctamente"));
 	}
 
-
-		// validar credenciales para login, se recibe un objeto con correo y contraseña
+	@Operation(summary = "Validar credenciales", description = "Valida correo y contraseña para autenticación")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Credenciales válidas"),
+			@ApiResponse(responseCode = "401", description = "Credenciales inválidas")
+	})
 	@PostMapping("/validar-credenciales")
-	public ResponseEntity<ValidarCredencialesResponse> validarCredenciales(
-			@RequestBody ValidarCredencialesRequest request) {
-
-		ValidarCredencialesResponse response = usuarioService.validarCredenciales(request);
-
-		if (!response.valido()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+	public ResponseEntity<ValidarCredencialesResponse> validarCredenciales(@RequestBody ValidarCredencialesRequest credenciales) {
+		ValidarCredencialesResponse response = usuarioService.validarCredenciales(credenciales);
+		if (response.valido()) {
+			return ResponseEntity.ok(response);
 		}
-
-		return ResponseEntity.ok(response);
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 	}
 
 }

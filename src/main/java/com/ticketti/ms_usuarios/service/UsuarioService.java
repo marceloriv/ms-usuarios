@@ -1,18 +1,18 @@
 package com.ticketti.ms_usuarios.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.ticketti.ms_usuarios.dto.ValidarCredencialesRequest;
+import com.ticketti.ms_usuarios.dto.ValidarCredencialesResponse;
 import com.ticketti.ms_usuarios.factory.UsuarioFactory;
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.repository.UsuarioRepository;
 import com.ticketti.ms_usuarios.usuarios.Usuario;
-import com.ticketti.ms_usuarios.dto.ValidarCredencialesRequest;
-import com.ticketti.ms_usuarios.dto.ValidarCredencialesResponse;
-
-
-
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import org.springframework.stereotype.Service;
 
 @Service
 public class UsuarioService {
@@ -26,11 +26,13 @@ public class UsuarioService {
 	// servicio que contiene la lógica de negocio
 	private final UsuarioRepository usuarioRepository;
 	private final UsuarioFactory usuarioFactory;
-	
+	private final PasswordEncoder passwordEncoder;
 
-	public UsuarioService(UsuarioRepository usuarioRepository, UsuarioFactory usuarioFactory) {
+
+	public UsuarioService(UsuarioRepository usuarioRepository, UsuarioFactory usuarioFactory, PasswordEncoder passwordEncoder) {
 		this.usuarioRepository = usuarioRepository;
 		this.usuarioFactory = usuarioFactory;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	public List<UsuarioModel> listar() {
@@ -42,7 +44,10 @@ public class UsuarioService {
 	}
 
 	public Optional<UsuarioModel> obtenerPorCorreo(String correo) {
-		return usuarioRepository.findByCorreo(correo);
+		if (correo == null) {
+			return Optional.empty();
+		}
+		return usuarioRepository.findByCorreoIgnoreCase(correo.trim());
 	}
 
 	public UsuarioModel crear(UsuarioModel usuario) {
@@ -54,9 +59,13 @@ public class UsuarioService {
 	public Optional<UsuarioModel> actualizar(Long id, UsuarioModel usuarioActualizado) {
 		return usuarioRepository.findById(id)
 				.map(usuarioExistente -> {
-					usuarioExistente.setNombre(usuarioActualizado.getNombre());
-					usuarioExistente.setCorreo(usuarioActualizado.getCorreo());
-					usuarioExistente.setContrasena(usuarioActualizado.getContrasena());
+					usuarioExistente.setNombre(usuarioActualizado.getNombre().trim());
+					String correoNormalizado = usuarioActualizado.getCorreo().trim().toLowerCase();
+					usuarioExistente.setCorreo(correoNormalizado);
+					if (usuarioActualizado.getContrasena() != null && !usuarioActualizado.getContrasena().isBlank()) {
+						usuarioExistente.setContrasena(passwordEncoder.encode(usuarioActualizado.getContrasena()));
+					}
+					usuarioExistente.setRol(usuarioActualizado.getRol());
 					usuarioExistente.setTelefono(usuarioActualizado.getTelefono());
 					usuarioExistente.setDireccion(usuarioActualizado.getDireccion());
 					return usuarioRepository.save(usuarioExistente);
@@ -77,7 +86,7 @@ public class UsuarioService {
 
 		String correoNormalizado = nuevoUsuario.getCorreo().trim().toLowerCase();
 
-		if (usuarioRepository.findByCorreo(correoNormalizado).isPresent()) {
+		if (usuarioRepository.findByCorreoIgnoreCase(correoNormalizado).isPresent()) {
 			throw new IllegalArgumentException("El correo ya existe");
 		}
 
@@ -100,10 +109,8 @@ public class UsuarioService {
 		nuevoUsuario.setId(null);
 		nuevoUsuario.setNombre(nuevoUsuario.getNombre().trim());
 		nuevoUsuario.setCorreo(correoNormalizado);
-		
+		nuevoUsuario.setContrasena(passwordEncoder.encode(nuevoUsuario.getContrasena()));
 
-		//la base de datos debe encriptar la contraseña no spring securty 
-	
 
 		return usuarioRepository.save(nuevoUsuario);
 	}
@@ -130,6 +137,24 @@ public class UsuarioService {
 		tipoUsuario.crearUsuario(usuario);
 
 		return usuarioRepository.save(usuario);
+
+	}
+
+	
+	private boolean coincideConContrasena(String contrasenaIngresada, String contrasenaGuardada) {
+		if (contrasenaIngresada == null || contrasenaGuardada == null) {
+			return false;
+		}
+
+		try {
+			if (passwordEncoder.matches(contrasenaIngresada, contrasenaGuardada)) {
+				return true;
+			}
+		} catch (IllegalArgumentException ignored) {
+			// La contraseña guardada no tiene formato BCrypt; se intenta compatibilidad con texto plano.
+		}
+
+		return contrasenaGuardada.equals(contrasenaIngresada);
 	}
 
 	// validar credenciales para login desde el BFF
@@ -143,8 +168,8 @@ public class UsuarioService {
 
 		String correoNormalizado = request.correo().trim().toLowerCase();
 
-		return usuarioRepository.findByCorreo(correoNormalizado)
-				.filter(usuario -> usuario.getContrasena().equals(request.contrasena()))
+		return usuarioRepository.findByCorreoIgnoreCase(correoNormalizado)
+				.filter(usuario -> coincideConContrasena(request.contrasena(), usuario.getContrasena()))
 				.map(usuario -> new ValidarCredencialesResponse(
 						true,
 						usuario.getId(),
@@ -175,5 +200,6 @@ public class UsuarioService {
 		usuarioRepository.deleteById(id);
 		return true;
 	}
+
 }
 
