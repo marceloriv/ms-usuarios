@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 
 
-@Component("AdminPlataforma")
+@Component("adminplataforma")
 public class UsuarioAdminPlataforma extends Usuario {
 
     @Override
