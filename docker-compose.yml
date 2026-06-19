@@ -4,10 +4,10 @@ services:
     container_name: ms-usuarios-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-ms_usuarios}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_USER: ${MYSQL_USER:-ms_usuarios_app}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ms_usuarios_app1234}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-usuarios_db}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     ports:
       - "3310:3306"
     volumes:
@@ -34,10 +34,11 @@ services:
       #hay que pensar que estas variables de entorno son para que el contenedor de la aplicación pueda conectarse a la base de datos MySQL, que se ejecuta en otro contenedor llamado "mysql". Por eso, se utiliza el nombre del servicio "mysql" como host en la URL de conexión a la base de datos.
 
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-ms_usuarios}
-      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER:-ms_usuarios_app}
-      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-ms_usuarios_app1234}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-usuarios_db}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SERVER_PORT=8080
+      - JWT_SECRET=${JWT_SECRET}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://host.docker.internal:8888
     ports:
