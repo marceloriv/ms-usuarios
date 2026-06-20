@@ -1,0 +1,36 @@
+name: Publicar imagen docker en aws
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build-and-push-aws:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repo
+        uses: actions/checkout@v4
+
+      - name: Configurar las credenciales
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+        
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: iniciar sesion en AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+        
+      - name: Construir y Publicar en aws 
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/ms-usuarios:latest
+
