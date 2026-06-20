@@ -11,7 +11,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDateTime;
 //el factory method lo debo dejar en el service y de ahí crear las carpetas 
+
 
 
 
@@ -52,8 +54,22 @@ public abstract class User {
 
 
 	@NotNull(message = "La dirección no puede ser nula")
-	@Size(min = 10, max = 255, message = "La dirección debe tener entre 10 y 255 caracteres")
+	@Size(min = 5, max = 255, message = "La dirección debe tener entre 5 y 255 caracteres")
     @Column(length = 255)
     private String direccion;
 
+
+	
+
+	//se crearán campos en el model para manejar intentos fallido de login, bloqueos, 
+	@Column(name = "intentos_fallidos", nullable = false)
+	private int intentosFallidos = 0;
+
+	@Column(name = "cuenta_bloqueada", nullable = false)
+	private boolean cuentaBloqueada = false;
+	//fecha del último intento fallido para calcular el tiempo de bloqueo
+	@Column(name = "fecha_bloqueo")
+	private LocalDateTime fechaBloqueo;
 }
+
+
