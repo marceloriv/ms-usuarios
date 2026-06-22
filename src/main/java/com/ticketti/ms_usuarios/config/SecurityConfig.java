@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -44,7 +45,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Registro público y validación de credenciales pública para el BFF
+                        // Registro público, consulta por ID y validación de credenciales
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/**").permitAll()
                         .requestMatchers("/api/v1/usuarios", "/api/v1/usuarios/validar-credenciales").permitAll()
 
                         // Todas las demás rutas requieren autenticación JWT

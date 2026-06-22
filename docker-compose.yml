@@ -53,6 +53,7 @@ volumes:
 networks:
   ticketti-network:
     external: true
+    name: ticketti-network
 
 
 
