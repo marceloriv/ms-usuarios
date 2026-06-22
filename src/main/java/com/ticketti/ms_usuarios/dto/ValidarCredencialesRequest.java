@@ -10,5 +10,7 @@ public record ValidarCredencialesRequest(
 
         @NotBlank(message = "La contraseña es requerida")
         String contrasena
+
+        
 ) {
 }

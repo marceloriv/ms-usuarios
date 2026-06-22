@@ -23,16 +23,13 @@ services:
 
   app:
     build: .    #el contedor va a buldear la imagen  del Dockerfile, que se encuentra en el directorio raíz del proyecto
-    container_name: ms-usuarios-app
+    container_name: ms-usuarios
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - ticketti-network
-
-      #variables de entorno para la conexión a la base de datos, que se pasan al contenedor de la aplicación
-      #hay que pensar que estas variables de entorno son para que el contenedor de la aplicación pueda conectarse a la base de datos MySQL, que se ejecuta en otro contenedor llamado "mysql". Por eso, se utiliza el nombre del servicio "mysql" como host en la URL de conexión a la base de datos.
 
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-usuarios_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
