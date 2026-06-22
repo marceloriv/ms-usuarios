@@ -19,15 +19,17 @@ import com.ticketti.ms_usuarios.usuarios.Usuario;
 public class UsuarioService {
 
 	// Patrones para validar formato de correo y contraseña segura
-	private static final Pattern EMAIL_PATTERN =
-			Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+	private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
-	private static final Pattern PASSWORD_PATTERN =
-			Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).{8,}$");
+	private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).{8,}$");
 
 	// Constantes para manejar intentos fallidos y bloqueo
 	private static final int MAX_INTENTOS_FALLIDOS = 3;
 	private static final int DURACION_BLOQUEO_MINUTOS = 15;
+
+	// Constantes para registrar la versión aceptada de documentos legales
+	private static final String VERSION_TERMINOS_ACTUAL = "1.0";
+	private static final String VERSION_PRIVACIDAD_ACTUAL = "1.0";
 
 	// Servicio que contiene la lógica de negocio
 	private final UsuarioRepository usuarioRepository;
@@ -35,8 +37,8 @@ public class UsuarioService {
 	private final PasswordEncoder passwordEncoder;
 
 	public UsuarioService(UsuarioRepository usuarioRepository,
-						  UsuarioFactory usuarioFactory,
-						  PasswordEncoder passwordEncoder) {
+			UsuarioFactory usuarioFactory,
+			PasswordEncoder passwordEncoder) {
 		this.usuarioRepository = usuarioRepository;
 		this.usuarioFactory = usuarioFactory;
 		this.passwordEncoder = passwordEncoder;
@@ -57,10 +59,7 @@ public class UsuarioService {
 		return usuarioRepository.findByCorreoIgnoreCase(correo.trim());
 	}
 
-	public UsuarioModel crear(UsuarioModel usuario) {
-		usuario.setId(null);
-		return usuarioRepository.save(usuario);
-	}
+
 
 	// Actualizar los usuarios del sistema
 	public Optional<UsuarioModel> actualizar(Long id, UsuarioModel usuarioActualizado) {
@@ -83,26 +82,39 @@ public class UsuarioService {
 				});
 	}
 
-	// Crear usuarios con validaciones de correo único, formato correcto y contraseña segura
+	// Crear usuarios con validaciones de correo único, formato correcto y
+	// contraseña segura
 	public UsuarioModel crearUsuario(UsuarioModel nuevoUsuario) {
 		if (nuevoUsuario == null) {
 			throw new IllegalArgumentException("El usuario es obligatorio");
 		}
 
+		// Validación de correo
 		if (nuevoUsuario.getCorreo() == null || !EMAIL_PATTERN.matcher(nuevoUsuario.getCorreo()).matches()) {
 			throw new IllegalArgumentException("El correo no tiene un formato valido");
 		}
 
 		String correoNormalizado = nuevoUsuario.getCorreo().trim().toLowerCase();
 
+		// Validación de correo único
 		if (usuarioRepository.findByCorreoIgnoreCase(correoNormalizado).isPresent()) {
 			throw new IllegalArgumentException("El correo ya existe");
 		}
 
+		// Validación de contraseña segura
 		if (nuevoUsuario.getContrasena() == null
 				|| !PASSWORD_PATTERN.matcher(nuevoUsuario.getContrasena()).matches()) {
 			throw new IllegalArgumentException(
 					"La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula y numero");
+		}
+
+		// Validación de aceptación de términos y condiciones y política de privacidad
+		if (!nuevoUsuario.isAceptaTerminos()) {
+			throw new IllegalArgumentException("Debe aceptar los Términos y Condiciones para registrarse");
+		}
+
+		if (!nuevoUsuario.isAceptaPrivacidad()) {
+			throw new IllegalArgumentException("Debe aceptar la Política de Privacidad para registrarse");
 		}
 
 		// Se utiliza el factory para crear el usuario con el rol correspondiente
@@ -114,6 +126,13 @@ public class UsuarioService {
 		nuevoUsuario.setNombre(nuevoUsuario.getNombre().trim());
 		nuevoUsuario.setCorreo(correoNormalizado);
 		nuevoUsuario.setContrasena(passwordEncoder.encode(nuevoUsuario.getContrasena()));
+
+		// Se registran las fechas y versiones actuales de los documentos legales
+		LocalDateTime fechaAceptacion = LocalDateTime.now();
+		nuevoUsuario.setFechaAceptacionTerminos(fechaAceptacion);
+		nuevoUsuario.setFechaAceptacionPrivacidad(fechaAceptacion);
+		nuevoUsuario.setVersionTerminos(VERSION_TERMINOS_ACTUAL);
+		nuevoUsuario.setVersionPoliticaPrivacidad(VERSION_PRIVACIDAD_ACTUAL);
 
 		// Valores iniciales para manejo de bloqueo
 		nuevoUsuario.setIntentosFallidos(0);
@@ -207,18 +226,15 @@ public class UsuarioService {
 
 			return Optional.of(respuestaBloqueada(
 					usuario,
-					"Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos."
-			));
+					"Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos."));
 		}
 
-		LocalDateTime fechaDesbloqueo =
-				usuario.getFechaBloqueo().plusMinutes(DURACION_BLOQUEO_MINUTOS);
+		LocalDateTime fechaDesbloqueo = usuario.getFechaBloqueo().plusMinutes(DURACION_BLOQUEO_MINUTOS);
 
 		if (LocalDateTime.now().isBefore(fechaDesbloqueo)) {
 			return Optional.of(respuestaBloqueada(
 					usuario,
-					"Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos."
-			));
+					"Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos."));
 		}
 
 		// Si ya pasaron los 15 minutos, se desbloquea automáticamente
@@ -229,6 +245,7 @@ public class UsuarioService {
 
 		return Optional.empty();
 	}
+
 	// Incrementa los intentos fallidos y bloquea la cuenta si se supera el límite
 	private ValidarCredencialesResponse manejarIntentoFallido(UsuarioModel usuario) {
 
@@ -241,8 +258,7 @@ public class UsuarioService {
 
 			return respuestaBloqueada(
 					usuario,
-					"Cuenta bloqueada por 15 minutos por demasiados intentos fallidos"
-			);
+					"Cuenta bloqueada por 15 minutos por demasiados intentos fallidos");
 		}
 
 		usuarioRepository.save(usuario);
@@ -251,10 +267,11 @@ public class UsuarioService {
 				"Credenciales inválidas. Intento "
 						+ usuario.getIntentosFallidos()
 						+ " de "
-						+ MAX_INTENTOS_FALLIDOS
-		);
+						+ MAX_INTENTOS_FALLIDOS);
 	}
-	// Resetea los intentos fallidos y desbloquea la cuenta después de un login exitoso
+
+	// Resetea los intentos fallidos y desbloquea la cuenta después de un login
+	// exitoso
 	private ValidarCredencialesResponse manejarLoginExitoso(UsuarioModel usuario) {
 
 		usuario.setIntentosFallidos(0);
@@ -268,10 +285,11 @@ public class UsuarioService {
 				usuario.getCorreo(),
 				usuario.getNombre(),
 				usuario.getRol(),
-				"Credenciales válidas"
-		);
+				"Credenciales válidas");
 	}
-	// Respuesta común para credenciales inválidas, con mensaje personalizado según el contexto
+
+	// Respuesta común para credenciales inválidas, con mensaje personalizado según
+	// el contexto
 	private ValidarCredencialesResponse credencialesInvalidas(String mensaje) {
 		return new ValidarCredencialesResponse(
 				false,
@@ -279,10 +297,11 @@ public class UsuarioService {
 				null,
 				null,
 				null,
-				mensaje
-		);
+				mensaje);
 	}
-	// Respuesta común para cuentas bloqueadas, con mensaje personalizado según el contexto
+
+	// Respuesta común para cuentas bloqueadas, con mensaje personalizado según el
+	// contexto
 	private ValidarCredencialesResponse respuestaBloqueada(UsuarioModel usuario, String mensaje) {
 		return new ValidarCredencialesResponse(
 				false,
@@ -290,8 +309,7 @@ public class UsuarioService {
 				usuario.getCorreo(),
 				usuario.getNombre(),
 				usuario.getRol(),
-				mensaje
-		);
+				mensaje);
 	}
 
 	// Eliminar usuario por id
