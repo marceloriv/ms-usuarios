@@ -44,8 +44,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Registro público
-                        .requestMatchers("/api/v1/usuarios").permitAll()
+                        // Registro público y validación de credenciales pública para el BFF
+                        .requestMatchers("/api/v1/usuarios", "/api/v1/usuarios/validar-credenciales").permitAll()
 
                         // Todas las demás rutas requieren autenticación JWT
                         .anyRequest().authenticated())
