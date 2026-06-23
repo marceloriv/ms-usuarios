@@ -3,47 +3,52 @@ services:
     image: mysql:8.4
     container_name: ms-usuarios-mysql
     restart: unless-stopped
+    networks:
+      - ticketti-network
     environment:
-      MYSQL_DATABASE: ms_usuarios
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_USER: ms_usuarios_app
-      MYSQL_PASSWORD: ms_usuarios_app1234
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     ports:
       - "3310:3306"
     volumes:
       - mysql_data_v2:/var/lib/mysql
+      - ../mysql-custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
 
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p1234"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   app:
-    build: .    #el contedor va a buldear la imagen  del Dockerfile, que se encuentra en el directorio raíz del proyecto
-    container_name: ms-usuarios
+    build: .
+    container_name: ms-usuarios-app
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
-    networks:
-      - default
-      - ticketti-network
-
-      #variables de entorno para la conexión a la base de datos, que se pasan al contenedor de la aplicación
-      #hay que pensar que estas variables de entorno son para que el contenedor de la aplicación pueda conectarse a la base de datos MySQL, que se ejecuta en otro contenedor llamado "mysql". Por eso, se utiliza el nombre del servicio "mysql" como host en la URL de conexión a la base de datos.
-
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ms_usuarios
-      - SPRING_DATASOURCE_USERNAME=ms_usuarios
-      - SPRING_DATASOURCE_PASSWORD=ms_usuarios_1234
-      - SERVER_PORT=8080
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://host.docker.internal:8888
     ports:
       - "8080:8080"
-
-      #volumes: para ocupar la configuración por defecto
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ticketti-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SERVER_PORT=8080
+      - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://host.docker.internal:8888
 
 volumes:
   mysql_data_v2:
@@ -51,11 +56,4 @@ volumes:
 networks:
   ticketti-network:
     external: true
-
-
-
-#la otrab semana github actions
-#prubeas unitarias
-#
-
-#prueb 2 crear una vpc , uno de los compañeros hacer el github actions, tres respoitorios, font, back y data, si podemos demostrar un cambio y se cambia en producción
+    name: ticketti-network

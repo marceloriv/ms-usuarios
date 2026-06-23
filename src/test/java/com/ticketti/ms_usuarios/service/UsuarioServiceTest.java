@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.ticketti.ms_usuarios.factory.UsuarioFactory;
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.repository.UsuarioRepository;
+import com.ticketti.ms_usuarios.security.JwtService;
 
 @ExtendWith(MockitoExtension.class)
 class UsuarioServiceTest {
@@ -38,11 +39,14 @@ class UsuarioServiceTest {
 	@Mock
 	private PasswordEncoder passwordEncoder;
 
+	@Mock
+	private JwtService jwtService;
+
 	private UsuarioService usuarioService;
 
 	@BeforeEach
 	void setUp() {
-		usuarioService = new UsuarioService(usuarioRepository, usuarioFactory, passwordEncoder);
+		usuarioService = new UsuarioService(usuarioRepository, usuarioFactory, passwordEncoder, jwtService);
 	}
 
 

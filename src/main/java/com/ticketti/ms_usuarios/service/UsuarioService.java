@@ -8,11 +8,13 @@ import java.util.regex.Pattern;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ticketti.ms_usuarios.dto.LoginResponse;
 import com.ticketti.ms_usuarios.dto.ValidarCredencialesRequest;
 import com.ticketti.ms_usuarios.dto.ValidarCredencialesResponse;
 import com.ticketti.ms_usuarios.factory.UsuarioFactory;
 import com.ticketti.ms_usuarios.model.UsuarioModel;
 import com.ticketti.ms_usuarios.repository.UsuarioRepository;
+import com.ticketti.ms_usuarios.security.JwtService;
 import com.ticketti.ms_usuarios.usuarios.Usuario;
 
 @Service
@@ -35,13 +37,16 @@ public class UsuarioService {
 	private final UsuarioRepository usuarioRepository;
 	private final UsuarioFactory usuarioFactory;
 	private final PasswordEncoder passwordEncoder;
+	private final JwtService jwtService;
 
 	public UsuarioService(UsuarioRepository usuarioRepository,
 			UsuarioFactory usuarioFactory,
-			PasswordEncoder passwordEncoder) {
+			PasswordEncoder passwordEncoder,
+			JwtService jwtService) {
 		this.usuarioRepository = usuarioRepository;
 		this.usuarioFactory = usuarioFactory;
 		this.passwordEncoder = passwordEncoder;
+		this.jwtService = jwtService;
 	}
 
 	public List<UsuarioModel> listar() {
@@ -210,6 +215,58 @@ public class UsuarioService {
 		}
 
 		return manejarLoginExitoso(usuario);
+	}
+
+	// Login que retorna JWT directamente (para uso sin BFF)
+	public LoginResponse login(ValidarCredencialesRequest request) {
+		if (requestInvalido(request)) {
+			throw new IllegalArgumentException("Correo y contraseña son obligatorios");
+		}
+
+		String correoNormalizado = request.correo().trim().toLowerCase();
+
+		UsuarioModel usuario = usuarioRepository.findByCorreoIgnoreCase(correoNormalizado)
+				.orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
+
+		if (usuario.isCuentaBloqueada()) {
+			LocalDateTime fechaDesbloqueo = usuario.getFechaBloqueo() != null
+					? usuario.getFechaBloqueo().plusMinutes(DURACION_BLOQUEO_MINUTOS)
+					: null;
+
+			if (fechaDesbloqueo == null || LocalDateTime.now().isBefore(fechaDesbloqueo)) {
+				throw new IllegalArgumentException("Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos.");
+			}
+
+			usuario.setCuentaBloqueada(false);
+			usuario.setIntentosFallidos(0);
+			usuario.setFechaBloqueo(null);
+			usuarioRepository.save(usuario);
+		}
+
+		if (!coincideConContrasena(request.contrasena(), usuario.getContrasena())) {
+			usuario.setIntentosFallidos(usuario.getIntentosFallidos() + 1);
+
+			if (usuario.getIntentosFallidos() >= MAX_INTENTOS_FALLIDOS) {
+				usuario.setCuentaBloqueada(true);
+				usuario.setFechaBloqueo(LocalDateTime.now());
+				usuarioRepository.save(usuario);
+				throw new IllegalArgumentException("Cuenta bloqueada por 15 minutos por demasiados intentos fallidos");
+			}
+
+			usuarioRepository.save(usuario);
+			throw new IllegalArgumentException(
+					"Credenciales inválidas. Intento " + usuario.getIntentosFallidos() + " de " + MAX_INTENTOS_FALLIDOS);
+		}
+
+		// Login exitoso: resetear intentos y generar token
+		usuario.setIntentosFallidos(0);
+		usuario.setCuentaBloqueada(false);
+		usuario.setFechaBloqueo(null);
+		usuarioRepository.save(usuario);
+
+		String token = jwtService.generarToken(usuario.getCorreo(), usuario.getRol(), usuario.getId());
+
+		return new LoginResponse(token, usuario.getId(), usuario.getCorreo(), usuario.getNombre(), usuario.getRol());
 	}
 
 	private boolean requestInvalido(ValidarCredencialesRequest request) {
