@@ -17,6 +17,15 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * Servicio JWT para ms-usuarios.
+ * Compatible con tokens emitidos por el BFF:
+ * - subject : correo del usuario (String)
+ * - claim   : "rol"
+ * - claim   : "usuarioId"
+ * Sin issuer ni audience estrictos. Algoritmo: HS256.
+ */
+
+/**
  * Servicio para validacion y extraccion de claims JWT.
  * Compatible con tokens emitidos por el BFF:
  * - subject : correo del usuario (String)
@@ -33,6 +42,20 @@ public class JwtService {
 
 	private SecretKey getSigningKey() {
 		return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+	}
+
+	private static final long EXPIRATION = 1000L * 60 * 60 * 24; // 24 horas
+
+	/** Genera un token JWT con el mismo formato que el BFF. */
+	public String generarToken(String correo, String rol, Long usuarioId) {
+		return Jwts.builder()
+				.subject(correo)
+				.claim("rol", rol)
+				.claim("usuarioId", usuarioId)
+				.issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis() + EXPIRATION))
+				.signWith(getSigningKey())
+				.compact();
 	}
 
 	// ── Métodos de contexto ────────────────────────────────────────────────

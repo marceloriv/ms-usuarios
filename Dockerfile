@@ -20,7 +20,7 @@ RUN mvn clean package -DskipTests
 #alpine es una imagen ligera de linux que se utiliza para reducir el tamaño de la imagen final
 FROM eclipse-temurin:17-jre-alpine
 
-# se crea una carpeta dentro del contenedor para almacenar el archivo .jar generado
+RUN apk add --no-cache curl
 
 WORKDIR /app
 

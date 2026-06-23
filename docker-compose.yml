@@ -6,7 +6,7 @@ services:
     networks:
       - ticketti-network
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-usuarios_db}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
@@ -14,6 +14,7 @@ services:
       - "3310:3306"
     volumes:
       - mysql_data_v2:/var/lib/mysql
+      - ../mysql-custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
 
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
@@ -22,27 +23,32 @@ services:
       retries: 10
 
   app:
-    build: .    #el contedor va a buldear la imagen  del Dockerfile, que se encuentra en el directorio raíz del proyecto
-    container_name: ms-usuarios
+    build: .
+    container_name: ms-usuarios-app
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - ticketti-network
-
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SERVER_PORT=8080
       - JWT_SECRET=${JWT_SECRET}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://host.docker.internal:8888
-    ports:
-      - "8080:8080"
-
-      #volumes: para ocupar la configuración por defecto
 
 volumes:
   mysql_data_v2:
@@ -51,11 +57,3 @@ networks:
   ticketti-network:
     external: true
     name: ticketti-network
-
-
-
-#la otrab semana github actions
-#prubeas unitarias
-#
-
-#prueb 2 crear una vpc , uno de los compañeros hacer el github actions, tres respoitorios, font, back y data, si podemos demostrar un cambio y se cambia en producción

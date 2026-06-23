@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
                         // Swagger queda público
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -45,9 +46,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Registro público, consulta por ID y validación de credenciales
+                        // Registro público, consulta por ID, login y validación de credenciales
                         .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/**").permitAll()
-                        .requestMatchers("/api/v1/usuarios", "/api/v1/usuarios/validar-credenciales").permitAll()
+                        .requestMatchers("/api/v1/usuarios", "/api/v1/usuarios/login", "/api/v1/usuarios/validar-credenciales").permitAll()
 
                         // Todas las demás rutas requieren autenticación JWT
                         .anyRequest().authenticated())
