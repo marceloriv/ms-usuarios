@@ -378,38 +378,4 @@ public class UsuarioService {
 		return true;
 	}
 
-	// Eliminar usuario con validación de permisos
-	// ADMIN y ADMINPLATAFORMA pueden eliminar cualquier cuenta
-	// CLIENTE y ORGANIZADOR solo pueden eliminar su propia cuenta
-	public boolean eliminarSiAutorizado(
-			Long idUsuarioAEliminar,
-			Long idUsuarioAutenticado,
-			String rolUsuarioAutenticado) {
-
-		if (idUsuarioAEliminar == null || idUsuarioAutenticado == null || rolUsuarioAutenticado == null) {
-			throw new SecurityException("No se pudo validar la autorización para eliminar esta cuenta");
-		}
-
-		String rolNormalizado = rolUsuarioAutenticado
-				.trim()
-				.replace("ROLE_", "")
-				.toUpperCase();
-
-		boolean esAdmin = "ADMIN".equals(rolNormalizado)
-				|| "ADMINPLATAFORMA".equals(rolNormalizado);
-
-		boolean esSuPropiaCuenta = idUsuarioAEliminar.equals(idUsuarioAutenticado);
-
-		if (!esAdmin && !esSuPropiaCuenta) {
-			throw new SecurityException("No tienes permisos para eliminar esta cuenta");
-		}
-
-		if (!usuarioRepository.existsById(idUsuarioAEliminar)) {
-			return false;
-		}
-
-		usuarioRepository.deleteById(idUsuarioAEliminar);
-		return true;
-	}
-
 }

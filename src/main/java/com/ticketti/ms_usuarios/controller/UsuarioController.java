@@ -137,48 +137,33 @@ public class UsuarioController {
 		}
 	}
 
-	// eliminar usuario y el administrador puede eliminar a cualquier usuario, el
-	// usuario puede eliminar su propia cuenta
-	@Operation(summary = "Eliminar usuario", description = "Elimina un usuario del sistema. ADMIN y ADMINPLATAFORMA pueden eliminar cualquier cuenta. Un usuario autenticado solo puede eliminar su propia cuenta.")
+	// eliminar usuario por id
+	@Operation(summary = "Eliminar usuario por ID", description = "Elimina un usuario del sistema por ID. La autorización debe ser validada previamente por el BFF.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Usuario eliminado correctamente"),
-			@ApiResponse(responseCode = "401", description = "Usuario no autenticado o datos de autenticación no enviados"),
-			@ApiResponse(responseCode = "403", description = "No tienes permisos para eliminar esta cuenta"),
 			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
 	})
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Map<String, String>> eliminarUsuario(
-			@PathVariable Long id,
-			@RequestHeader(value = "X-Usuario-Id", required = false) Long idUsuarioAutenticado,
-			@RequestHeader(value = "X-Usuario-Rol", required = false) String rolUsuarioAutenticado) {
-		if (idUsuarioAutenticado == null || rolUsuarioAutenticado == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-					.body(Map.of("mensaje", "No se pudo identificar al usuario autenticado"));
+	public ResponseEntity<Map<String, String>> eliminarUsuario(@PathVariable Long id) {
+		boolean eliminado = usuarioService.eliminar(id);
+
+		if (!eliminado) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(Map.of("mensaje", "Usuario no encontrado"));
 		}
 
-		try {
-			boolean eliminado = usuarioService.eliminarSiAutorizado(
-					id,
-					idUsuarioAutenticado,
-					rolUsuarioAutenticado);
-
-			if (!eliminado) {
-				return ResponseEntity.notFound().build();
-			}
-
-			return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado correctamente"));
-
-		} catch (SecurityException e) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(Map.of("mensaje", e.getMessage()));
-		}
+		return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado correctamente"));
 	}
-	// Validar credenciales y generar JWT para autenticación, para login y validación de credenciales
+
+	// Validar credenciales y generar JWT para autenticación, para login y
+	// validación de credenciales
 	@Operation(summary = "Validar credenciales", description = "Valida correo y contraseña para autenticación")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Credenciales válidas"),
 			@ApiResponse(responseCode = "401", description = "Credenciales inválidas")
 	})
+
+	//
 	@PostMapping("/validar-credenciales")
 	public ResponseEntity<ValidarCredencialesResponse> validarCredenciales(
 			@RequestBody ValidarCredencialesRequest credenciales) {
@@ -188,7 +173,9 @@ public class UsuarioController {
 		}
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 	}
-	// Login y generación de JWT para autenticación, para login y validación de credenciales
+
+	// Login y generación de JWT para autenticación, para login y validación de
+	// credenciales
 	@Operation(summary = "Login y generación de JWT", description = "Valida credenciales y retorna un token JWT")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Login exitoso, token generado"),
