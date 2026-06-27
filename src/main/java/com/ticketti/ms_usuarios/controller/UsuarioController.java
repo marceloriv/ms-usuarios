@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -94,8 +95,6 @@ public class UsuarioController {
 			@ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
 	})
 
-
-
 	@PostMapping
 	public ResponseEntity<?> crearUsuario(@Valid @RequestBody UsuarioModel usuario) {
 		try {
@@ -110,9 +109,6 @@ public class UsuarioController {
 		}
 	}
 
-
-	
-
 	// actualizar los usuarios del sistema uwu
 	@Operation(summary = "Actualizar usuario")
 	@ApiResponses(value = {
@@ -126,12 +122,12 @@ public class UsuarioController {
 				.map(ResponseEntity::ok)
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
-	//solo el usuario adminPlataforma puede cambiar el rol del los usruarios
+
+	// solo el usuario adminPlataforma puede cambiar el rol del los usruarios
 	@PatchMapping("/{id}/rol")
 	public ResponseEntity<?> cambiarRol(
 			@PathVariable Long id,
-			@RequestBody Map<String, String> body
-	) {
+			@RequestBody Map<String, String> body) {
 		try {
 			String nuevoRol = body.get("rol");
 			UsuarioModel usuarioActualizado = usuarioService.cambiarRol(id, nuevoRol);
@@ -141,11 +137,8 @@ public class UsuarioController {
 		}
 	}
 
-
-
-	// eliminar usuario y el administrador puede eliminar a cualquier usuario, el
-	// usuario puede eliminar su propia cuenta
-	@Operation(summary = "Eliminar usuario")
+	// eliminar usuario por id
+	@Operation(summary = "Eliminar usuario por ID", description = "Elimina un usuario del sistema por ID. La autorización debe ser validada previamente por el BFF.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Usuario eliminado correctamente"),
 			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
@@ -153,19 +146,27 @@ public class UsuarioController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Map<String, String>> eliminarUsuario(@PathVariable Long id) {
 		boolean eliminado = usuarioService.eliminar(id);
+
 		if (!eliminado) {
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(Map.of("mensaje", "Usuario no encontrado"));
 		}
+
 		return ResponseEntity.ok(Map.of("mensaje", "Usuario eliminado correctamente"));
 	}
 
+	// Validar credenciales y generar JWT para autenticación, para login y
+	// validación de credenciales
 	@Operation(summary = "Validar credenciales", description = "Valida correo y contraseña para autenticación")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Credenciales válidas"),
 			@ApiResponse(responseCode = "401", description = "Credenciales inválidas")
 	})
+
+	//
 	@PostMapping("/validar-credenciales")
-	public ResponseEntity<ValidarCredencialesResponse> validarCredenciales(@RequestBody ValidarCredencialesRequest credenciales) {
+	public ResponseEntity<ValidarCredencialesResponse> validarCredenciales(
+			@RequestBody ValidarCredencialesRequest credenciales) {
 		ValidarCredencialesResponse response = usuarioService.validarCredenciales(credenciales);
 		if (response.valido()) {
 			return ResponseEntity.ok(response);
@@ -173,6 +174,8 @@ public class UsuarioController {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 	}
 
+	// Login y generación de JWT para autenticación, para login y validación de
+	// credenciales
 	@Operation(summary = "Login y generación de JWT", description = "Valida credenciales y retorna un token JWT")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Login exitoso, token generado"),

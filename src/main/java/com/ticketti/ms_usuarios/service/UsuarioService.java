@@ -64,8 +64,6 @@ public class UsuarioService {
 		return usuarioRepository.findByCorreoIgnoreCase(correo.trim());
 	}
 
-
-
 	// Actualizar los usuarios del sistema
 	public Optional<UsuarioModel> actualizar(Long id, UsuarioModel usuarioActualizado) {
 		return usuarioRepository.findById(id)
@@ -255,7 +253,8 @@ public class UsuarioService {
 
 			usuarioRepository.save(usuario);
 			throw new IllegalArgumentException(
-					"Credenciales inválidas. Intento " + usuario.getIntentosFallidos() + " de " + MAX_INTENTOS_FALLIDOS);
+					"Credenciales inválidas. Intento " + usuario.getIntentosFallidos() + " de "
+							+ MAX_INTENTOS_FALLIDOS);
 		}
 
 		// Login exitoso: resetear intentos y generar token
