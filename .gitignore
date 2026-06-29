@@ -37,3 +37,8 @@ build/
 .env
 .env.local
 
+
+.env
+.env.local
+
+.env.backup.local
