@@ -4,17 +4,26 @@ import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.ticketti.ms_usuarios.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,6 +38,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
                         // Swagger queda público
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -36,10 +46,13 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Todas las rutas del microservicio quedan permitidas.
-                        // La validación JWT queda a cargo del BFF.
-                        .anyRequest().permitAll()
-                );
+                        // Registro público, consulta por ID, login y validación de credenciales
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/**").permitAll()
+                        .requestMatchers("/api/v1/usuarios", "/api/v1/usuarios/login", "/api/v1/usuarios/validar-credenciales").permitAll()
+
+                        // Todas las demás rutas requieren autenticación JWT
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -59,7 +72,14 @@ public class SecurityConfig {
                 "http://127.0.0.1:5173"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Usuario-Id",
+                "X-Rol-Usuario-Id",
+                "X-Requested-With"
+        ));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
